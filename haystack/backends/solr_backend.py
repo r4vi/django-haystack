@@ -184,6 +184,7 @@ class SolrSearchBackend(BaseSearchBackend):
         if facets is not None:
             kwargs['facet'] = 'on'
             kwargs['facet.field'] = facets
+            kwargs['facet.limit'] = 250
 
         if date_facets is not None:
             kwargs['facet'] = 'on'
