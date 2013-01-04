@@ -1,3 +1,9 @@
+=============
+Why this fork?
+=============
+To allow multi field sorting (solr backend) when using the distance sort, just use 'geodist()' in the normal order_by 
+list (wherever you want) and it'll work
+
 ========
 Haystack
 ========
