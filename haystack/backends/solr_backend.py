@@ -160,8 +160,8 @@ class SolrSearchBackend(BaseSearchBackend):
                 if sort_by.startswith('distance '):
                     warnings.warn("In order to sort by distance, you must call the '.distance(...)' method.")
 
-                # Regular sorting.
-                kwargs['sort'] = sort_by
+            # Regular sorting.
+            kwargs['sort'] = sort_by
 
         if start_offset is not None:
             kwargs['start'] = start_offset
@@ -184,7 +184,7 @@ class SolrSearchBackend(BaseSearchBackend):
         if facets is not None:
             kwargs['facet'] = 'on'
             kwargs['facet.field'] = facets
-            kwargs['facet.limit'] = 250
+            kwargs['facet.limit'] = 350
 
         if date_facets is not None:
             kwargs['facet'] = 'on'
@@ -251,7 +251,7 @@ class SolrSearchBackend(BaseSearchBackend):
             # a center point & a radius off the user-provided box, which kinda
             # sucks. We'll avoid it for now, since Solr 4.x's release will be some
             # time yet.
-            kwargs['fl'] += ' _dist_:geodist()'
+            #kwargs['fl'] += ' _dist_:geodist()'
             pass
 
         return kwargs
