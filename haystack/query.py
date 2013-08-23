@@ -193,7 +193,7 @@ class SearchQuerySet(object):
 
             # Remember the search position for each result so we don't have to resort later.
             for result in results:
-                original_results.append(result)
+                original_results.add(result)
                 models_pks.setdefault(result.model, []).append(result.pk)
 
             # Load the objects for each model in turn.
@@ -327,12 +327,17 @@ class SearchQuerySet(object):
     def models(self, *models):
         """Accepts an arbitrary number of Model classes to include in the search."""
         clone = self._clone()
-
+        valid_models = set()
         for model in models:
             if not model in connections[self.query._using].get_unified_index().get_indexed_models():
                 warnings.warn('The model %r is not registered for search.' % model)
+            else:
+                valid_models.add(model)
 
-            clone.query.add_model(model)
+        if len(valid_models):
+            clone.query.models.clear()
+            for model in valid_models:
+                clone.query.add_model(model)
 
         return clone
 
@@ -357,6 +362,17 @@ class SearchQuerySet(object):
         """Adds faceting to a query for the provided field."""
         clone = self._clone()
         clone.query.add_field_facet(field)
+        return clone
+    
+    def pivot_facet(self, *pivot_on):
+        """Adds pivot facets to querystring"""
+        clone = self._clone()
+        clone.query.add_pivot_facet(*pivot_on)
+        return clone
+
+    def group_by(self, field, facet=True, ngroup=False):
+        clone = self._clone()
+        clone.query.add_group_by(field, facet, ngroup)
         return clone
 
     def within(self, field, point_1, point_2):
