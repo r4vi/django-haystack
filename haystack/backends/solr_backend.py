@@ -116,10 +116,9 @@ class SolrSearchBackend(BaseSearchBackend):
                 'results': [],
                 'hits': 0,
             }
-
         search_kwargs = self.build_search_kwargs(query_string, **kwargs)
-
         try:
+            import ipdb; ipdb.set_trace()
             raw_results = self.conn.search(query_string, **search_kwargs)
         except (IOError, SolrError), e:
             if not self.silently_fail:
@@ -136,7 +135,7 @@ class SolrSearchBackend(BaseSearchBackend):
                             narrow_queries=None, spelling_query=None,
                             within=None, dwithin=None, distance_point=None,
                             models=None, limit_to_registered_models=None,
-                            result_class=None):
+                            result_class=None, pivot_facets=None, rows=None, group=None):
         kwargs = {'fl': '* score'}
 
         if fields:
@@ -185,6 +184,21 @@ class SolrSearchBackend(BaseSearchBackend):
             kwargs['facet'] = 'on'
             kwargs['facet.field'] = facets
             kwargs['facet.limit'] = 350
+
+        if pivot_facets is not None:
+            kwargs['facet'] = 'on'
+            kwargs['facet.pivot'] = pivot_facets
+            kwargs['facet.limit'] = 400
+
+        if group is not None:
+            kwargs['group'] = 'true'
+            kwargs['group.field'] = group['field']
+            kwargs['group.facet'] = 'true' if group['facet'] else 'false'
+            kwargs['group.ngroup'] = group['ngroup']
+
+
+        if rows is not None:
+            kwargs['rows'] = rows
 
         if date_facets is not None:
             kwargs['facet'] = 'on'
@@ -331,6 +345,8 @@ class SolrSearchBackend(BaseSearchBackend):
                 'fields': raw_results.facets.get('facet_fields', {}),
                 'dates': raw_results.facets.get('facet_dates', {}),
                 'queries': raw_results.facets.get('facet_queries', {}),
+                'ranges': raw_results.facets.get('facet_ranges', {}),
+                'pivot': raw_results.facets.get('facet_pivot', {}),
             }
 
             for key in ['fields']:
@@ -485,6 +501,9 @@ class SolrSearchBackend(BaseSearchBackend):
 
 
 class SolrSearchQuery(BaseSearchQuery):
+
+
+
     def matching_all_fragment(self):
         return '*:*'
 
@@ -497,6 +516,14 @@ class SolrSearchQuery(BaseSearchQuery):
             'distance': distance,
         }
         self.spatial_query.update(kwargs)
+
+    def add_group_by(self, field, facet=True, ngroup=False):
+        group = {
+            'field': field,
+            'facet': facet,
+            'ngroup': ngroup
+        }
+        self.group.update(group)
 
     def add_order_by_distance(self, lat, long, sfield):
         """Orders the search result by distance from point."""
@@ -660,6 +687,9 @@ class SolrSearchQuery(BaseSearchQuery):
         if spelling_query:
             search_kwargs['spelling_query'] = spelling_query
 
+        if self.pivot_facets:
+            search_kwargs['pivot_facets'] = list(self.pivot_facets)
+
         return search_kwargs
         
     def run(self, spelling_query=None, **kwargs):
@@ -690,6 +720,15 @@ class SolrSearchQuery(BaseSearchQuery):
         self._results = results.get('results', [])
         self._hit_count = results.get('hits', 0)
 
+
+    def add_pivot_facet(self, *facets):
+        self.pivot_facets.add(','.join(facets))
+
+    def __init__(self, *args, **kwargs):
+        super(SolrSearchQuery, self).__init__(*args, **kwargs)
+
+        self.pivot_facets = set() # set of strings
+        self.group = None
 
 class SolrEngine(BaseEngine):
     backend = SolrSearchBackend

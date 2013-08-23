@@ -4,12 +4,15 @@ from distutils.core import setup
 
 setup(
     name='django-haystack',
-    version='2.0.3-beta',
+    version='2.0.4-pitchup-beta',
     description='Pluggable search for Django.',
-    author='Daniel Lindsley',
-    author_email='daniel@toastdriven.com',
+    author='Daniel Lindsley, Pitchup.com',
+    author_email='siteadmins@pitchup.com',
     long_description=open('README.rst', 'r').read(),
     url='http://haystacksearch.org/',
+    requires=[
+        'pysolr>=3.1.0'
+        ],
     packages=[
         'haystack',
         'haystack.backends',
