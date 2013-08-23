@@ -294,6 +294,7 @@ class BaseSearchQuery(object):
         self.facets = set()
         self.date_facets = {}
         self.query_facets = []
+        self.pivot_facets = set()
         self.narrow_queries = set()
         #: If defined, fields should be a list of field names - no other values
         #: will be retrieved so the caller must be careful to include django_ct
@@ -389,6 +390,9 @@ class BaseSearchQuery(object):
         if self.models:
             kwargs['models'] = self.models
 
+        if self.pivot_facets:
+            kwargs['pivot_facets'] = self.pivot_facets
+            
         return kwargs
 
     def run(self, spelling_query=None, **kwargs):
