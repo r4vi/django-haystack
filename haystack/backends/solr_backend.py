@@ -118,7 +118,6 @@ class SolrSearchBackend(BaseSearchBackend):
             }
         search_kwargs = self.build_search_kwargs(query_string, **kwargs)
         try:
-            import ipdb; ipdb.set_trace()
             raw_results = self.conn.search(query_string, **search_kwargs)
         except (IOError, SolrError), e:
             if not self.silently_fail:
@@ -523,7 +522,10 @@ class SolrSearchQuery(BaseSearchQuery):
             'facet': facet,
             'ngroup': ngroup
         }
-        self.group.update(group)
+        if self.group:
+            self.group.update(group)
+        else:
+            self.group = group
 
     def add_order_by_distance(self, lat, long, sfield):
         """Orders the search result by distance from point."""
@@ -686,7 +688,6 @@ class SolrSearchQuery(BaseSearchQuery):
 
         if spelling_query:
             search_kwargs['spelling_query'] = spelling_query
-
         if self.pivot_facets:
             search_kwargs['pivot_facets'] = list(self.pivot_facets)
 
@@ -729,6 +730,13 @@ class SolrSearchQuery(BaseSearchQuery):
 
         self.pivot_facets = set() # set of strings
         self.group = None
+
+    def _clone(self, klass=None, using=None):
+        clone = super(SolrSearchQuery, self)._clone(klass, using)
+        clone.pivot_facets = self.pivot_facets.copy()
+        if self.group:
+            clone.group = self.group.copy()
+        return clone
 
 class SolrEngine(BaseEngine):
     backend = SolrSearchBackend
